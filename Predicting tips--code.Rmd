@@ -1,0 +1,371 @@
+---
+title: "predicting tips"
+author: "Meilin Li"
+date: "2020/5/11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library('ggplot2') # visualisation
+library('VIM') #visualisation
+library('dplyr') # data manipulation
+library('readr') # input/output
+library('stringr') # string manipulation
+library('forcats') # factor manipulation
+library('lubridate') # date and time
+library('data.table')
+library('lattice')
+library('MASS')
+library('nnet')
+library('mice')
+```
+
+
+
+```{r setup, include=FALSE}
+library('ggplot2') # visualisation
+library('VIM') #visualisation
+library('dplyr') # data manipulation
+library('readr') # input/output
+library('stringr') # string manipulation
+library('forcats') # factor manipulation
+library('lubridate') # date and time
+library('data.table')
+```
+
+
+
+#relation
+```{r setup, include=FALSE}
+library('ggplot2') # visualisation
+library('VIM') #visualisation
+library('dplyr') # data manipulation
+library('readr') # input/output
+library('stringr') # string manipulation
+library('forcats') # factor manipulation
+library('lubridate') # date and time
+library('data.table')
+```
+
+
+
+#relation
+```{r}
+library(caTools)
+library(VIM)
+dat<-read.csv('tip.csv')
+Train<-dat
+Train<-unique(Train)
+a<-which(Train$pcttip>30)
+b<-which(Train$pcttip<=0)
+Train[a,23]=30
+Train[b,23]=0
+data<-subset(Train,Train$pcttip!="NA")
+q<-data
+d<-cbind(data$pcttip,data$flair,data$intro,data$selling,data$touch,data$jokes,data$repeat.,data$customer_name,data$draw,data$smile,data$thanks,data$weather,data$complement)
+colnames(d) <- c("pcttip","flair","intro","selling","touch","jokes","repeat","customer_name","draw","smile","thanks","weather","complement")
+d<-as.data.frame(d)
+aggr(d,prop=FALSE,numbers=TRUE)
+d$pcttip<- NULL
+a<-which((rowSums(x = is.na(x = d)) == ncol(x = d)))
+pc<-q[-a,]
+Data<-d[!(rowSums(x = is.na(x = d)) == ncol(x = d)),]
+pctip<-pc$pcttip
+data1<-data.frame(Data,pctip)
+dd<-data.frame(Data,pctip)
+data1$pctip<-cut(data1$pctip,c(0,10,15,20,30),c("1-10","11-15","16-20","21-30"))
+library(lattice)
+library(MASS)
+library(nnet)
+library(mice) #前三个包是mice的基础
+imp=mice(data1,m=4,method="rf") #4重插补，即生成4个无缺失数据集
+f_data<-complete(imp)
+
+summary(imp)
+
+densityplot(imp)
+names(f_data)[13]<-c("pcttip")
+names(dd)[13]<-c("pcttip")
+f_data$pcttip<-dd$pcttip
+
+library(ggplot2)
+ggplot(dd,aes(x=dd$pcttip)) +
+geom_histogram(colour="black",fill = "blue", bins = 60, position="stack", show.legend = TRUE)
+min(f_data$intro)
+pc[26:28]<-f_data[1:3]
+pc[30:38]<-f_data[4:12]
+
+```
+
+
+
+```{r}
+
+attitude<-pc[,c("pcttip","Extraverted_enthusiastic","Critical_quarrelsome","Anxious_easily_upset","Dependable_selfdisciplined","Open_to_new_experiences_complex","Reserved_quiet","Sympathetic_warm","Disorganized_careless","Calm_emotionally_stable","Conventional_uncreative")]
+
+imp=mice(attitude,m=4,method="rf") #4重插补，即生成4个无缺失数据集
+f_data1<-complete(imp)
+summary(imp)
+densityplot(imp)
+names(f_data1)[1]<-c("pcttip")
+names(dd)[13]<-c("pcttip")
+f_data1$pcttip<-dd$pcttip
+grp_df<-f_data1%>%group_by(Extraverted_enthusiastic)%>%summarise(avg_dur=mean(Critical_quarrelsome),Depend=mean(Dependable_selfdisciplined),Open=mean(Open_to_new_experiences_complex),reser=mean(Reserved_quiet),sym=mean(Sympathetic_warm),dis=mean(Disorganized_careless),clam=mean(Calm_emotionally_stable),conv=mean(Conventional_uncreative),Anxious_easily_upset=mean(Anxious_easily_upset))
+
+par(mfrow=c(2,5))
+plot(Critical_quarrelsome ~ Extraverted_enthusiastic, data=f_data1)
+z <- lm(Critical_quarrelsome ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+plot( Dependable_selfdisciplined~ Extraverted_enthusiastic, data=f_data1)
+z <- lm( Dependable_selfdisciplined ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+plot(Open_to_new_experiences_complex ~ Extraverted_enthusiastic, data=f_data1)
+z <- lm(Open_to_new_experiences_complex ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+plot(Reserved_quiet ~ Extraverted_enthusiastic, data=f_data1)
+z <- lm(Reserved_quiet ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+plot(Sympathetic_warm ~ Extraverted_enthusiastic, data=f_data1)
+z <- lm(Sympathetic_warm ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+plot(Disorganized_careless ~ Extraverted_enthusiastic, data=f_data1)
+z <- lm(Disorganized_careless ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+plot(Calm_emotionally_stable ~ Extraverted_enthusiastic, data=f_data1)
+z <- lm(Calm_emotionally_stable ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+plot(Conventional_uncreative ~ Extraverted_enthusiastic, data=f_data1)
+z <- lm(Conventional_uncreative ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+plot(Anxious_easily_upset ~ Extraverted_enthusiastic, data=f_data1)
+z <- lm(Anxious_easily_upset ~ Extraverted_enthusiastic, data = f_data1)
+abline(z)
+
+regression<-lm(pcttip~., data=f_data1)
+summary(regression)
+
+pos<-cbind(f_data1$Extraverted_enthusiastic,f_data1$Dependable_selfdisciplined,f_data1$Open_to_new_experiences_complex,f_data1$Calm_emotionally_stable,f_data1$Sympathetic_warm)
+vec<-apply(pos,1,sum)
+ggplot(f_data1,aes(x=vec,y=pcttip)) +geom_point()
+
+neg<-cbind(f_data1$Critical_quarrelsome,f_data1$Anxious_easily_upset,f_data1$Reserved_quiet,f_data1$Disorganized_careless,f_data1$Conventional_uncreative)
+vec<-apply(neg,1,sum)
+ggplot(f_data1,aes(x=vec,y=pcttip)) +geom_point()
+
+pc[,c("pcttip","Extraverted_enthusiastic","Critical_quarrelsome","Anxious_easily_upset","Dependable_selfdisciplined","Open_to_new_experiences_complex","Reserved_quiet","Sympathetic_warm","Disorganized_careless","Calm_emotionally_stable","Conventional_uncreative")]<-f_data1
+
+```
+
+
+```{r}
+test1<-pc
+#glimpse(train)
+```
+
+```{r}
+#aggr(test1,prop=F,plot=FALSE,numbers=T) #delete the most
+#aggr(test1,prop=F,numbers=T)
+#cor(na.omit(test1))
+test1$hair_other<-str_to_lower(test1$hair_other)
+test1$hair[test1$hair_other=='black']<-4
+test1$race[test1$race==5|test1$race==30]<-NA
+test1$hair[test1$hair==30]<-NA
+test1$race<-factor(test1$race,levels =c(1,2,3,4),labels=c("Asian","Black","Hispanic","White"))
+test1$hair<-factor(test1$hair,levels=c(1,2,3,4),labels=c("yellow", "brown","blond","black"))
+table(paste(test1$hair,test1$race))
+if(is.na(test1$race)==TRUE){test1$race[test1$hair=='black']<-'Asian'}
+if(is.na(test1$race)==TRUE){test1$race[test1$hair=='blond'|test1$hair=='brown'|test1$hair=='yellow']<-'White'}
+if(is.na(test1$hair)==TRUE){test1$hair[test1$race=='Asian']<-'black'}
+if(is.na(test1$hair)==TRUE){test1$hair[test1$race=='White'|test1$race=='Black'|test1$race=='Hispanic']<-'brown'}
+test1$sex[test1$sex==0|test1$sex==30|is.na(test1$sex)]<-1
+#train$sex<-factor(train$sex,levels=c(0,1),labels=c("male","female"))
+```
+
+```{r}
+test1$yrs_experience<-as.numeric(as.character(test1$yrs_experience))
+test1$birth_yr <-as.numeric(as.character(test1$birth_yr))
+test1$age<-(2006-test1$birth_yr)
+test1$age_exp_relation<-test1$age-test1$yrs_experience
+test1<-test1[test1$age_exp_relation > 13 & !is.na(test1$age_exp_relation), ]
+test1<-test1[test1$age<100, ]
+qplot(age,yrs_experience,data=test1,geom="point")
+```
+
+
+```{r}
+test1$hair[is.na(test1$hair)]<-'brown'
+test1$race[is.na(test1$race)]<-'White'
+qplot(age,married,data=test1)
+test1$married[test1$married==2]<-NA
+for (i in 1:nrow(test1)) {
+  if(is.na(test1$married[i]==TRUE)){test1$married[i]<-rbinom(1, 1, 1/2)}
+}
+
+test1<-test1[,c(-78,-75)]
+write.csv(test1,"whywhy.csv")
+```
+
+
+
+```{r}
+test2<-read.csv('whywhy.csv')
+test2$State <-as.character(test2$State)
+test2$State <-tolower(test2$State)
+States <- c("alabama"="al", "alaska"="ak", "arizona"="az", "arkansas"="ar",
+"california"="ca", "colorado"="co", "connecticut"="ct", "delaware"="de", "district of
+columbia"="dc", "florida"="fl", "georgia"="ga", "hawaii"="hi", "idaho"="id",
+"illinois"="il", "indiana"="in", "iowa"="ia", "kansas"="ks", "kentucky"="ky",
+"louisiana"="la", "maine"="me","maryland"="md", "massachusetts"="ma", "michigan"="mi",
+"minnesota"="mn", "mississippi"="ms", "missouri"="mo", "montana"="mt",
+"nebraska"="ne", "nevada"="nv", "new hampshire"="nh", "new jersey"="nj", "new
+mexico"="nm", "new york"="ny", "north carolina"="nc", "north dakota"="nd",
+"ohio"="oh", "oklahoma"="ok", "oregon"="or", "pennsylvania"="pa", "rhode island"="ri",
+"south carolina"="sc", "south dakota"="sd", "tennessee"="tn", "texas"="tx", 
+"utah"="ut", "vermont"="vt", "virginia"="va", "washington"="wa", "west virginia"="wv",
+"wisconsin"="wi", "wyoming"="wy")
+longstates <- test2$State %in% names(States)
+test2$longstates<-longstates
+test2$longstates<- test2$longstates*1
+states2 <- c("al"="al","ak"="ak","az"="az","ar"="ar","ca"="ca","co"="co",
+"ct"="ct","de"="de","dc"="dc","fl"="fl","ga"="ga","hi"="hi","id"="id","il"="il","in"="
+in","ia"="ia","ks"="ks","ky"="ky","la"="la","me"="me","md"="md","ma"="ma","mi"="mi","m
+n"="mn","ms"="ms","mo"="mo","mt"="mt","ne"="ne","nv"="nv","nh"="nh","nj"="nj","nm"="nm
+","ny"="ny","nc"="nc","nd"="nd","oh"="oh","ok"="ok","or"="or","pw"="pw","pa"="pa","ri"
+="ri","sc"="sc","sd"="sd","tn"="tn","tx"="tx","ut"="ut","vt"="vt","va"="va","wa"="wa",
+"wv"="wv","wi"="wi","wy"="wy")
+shortstates <- test2$State %in% names(states2)
+test2$shortstates<-shortstates
+test2$shortstates <- test2$shortstates*1
+test2$USstates <- test2$longstates-test2$shortstates
+test2$USstates <- (test2$USstates)^2
+test2US<-test2
+test2US<-test2US[test2US$USstates %in% 1,]
+test2NONUS<-test2
+test2NONUS<-test2NONUS[test2NONUS$USstates %in% 0,]
+meanUS<-mean(test2US$pcttip)
+meanNONUS<-mean(test2NONUS$pcttip)
+means<- c(meanUS, meanNONUS)
+Country = c("Mean USA","Mean NONUS")
+Country<-factor(Country, level=c("Mean USA","Mean NONUS"))
+df<-data.frame(Country,means)
+#画图
+ggplot(data=df,aes(x=Country,y=means,color=Country))+geom_bar(stat = "identity")
+#qplot(Country, means, geom="histogram", data=df, ylim=c(0,17), ylab="Mean % tip")
+test2<-test2[ ,c(-81,-80,-1,-2,-4,-6,-7,-8,-9)]
+test2<-test2[ ,c(-2,-3,-4,-5,-6)]
+write.csv(test2,"whywhywhy.csv")
+table(test2$married)
+```
+
+```{r}
+library("dplyr")
+library("stringr")
+library("ggplot2")
+library("VIM")
+library("Rmisc")
+library("Matrix")
+library("xgboost")
+library("caret")
+library("lubridate")
+```
+
+
+```{r}
+
+train<-read.csv("features.csv")
+train$hair<-as.integer(train$hair)
+#train$race<-as.integer(train$race)
+
+```
+
+```{r}
+
+set.seed(4321)
+trainIndex <- createDataPartition(train$pcttip, p = 0.8, list = FALSE, times = 1)
+train <- train[trainIndex,]
+valid <- train[-trainIndex,]
+foo <- train
+bar <- valid
+dtrain <- xgb.DMatrix(as.matrix(foo),label = train$pcttip)
+dvalid <- xgb.DMatrix(as.matrix(bar),label = valid$pcttip)
+```
+
+```{r}
+
+
+xgb_params <- list(colsample_bytree = 0.7, #variables per tree
+                   subsample = 0.7, #data subset per tree 
+                   booster = "gbtree",
+                   max_depth = 5, #tree levels
+                   eta = 0.3, #shrinkage
+                   eval_metric = "rmse", 
+                   objective = "reg:linear",
+                   set.seed = 4321
+                   )
+
+watchlist <- list(train=dtrain, valid=dvalid)
+
+
+gb_dt <- xgb.train(params = xgb_params,
+                   data = dtrain,
+                   print_every_n = 5,
+                   watchlist = watchlist,
+                   nrounds = 100)
+                   
+
+print(gb_dt$evaluation_log[which.min(gb_dt$evaluation_log$valid_rms)])
+
+```
+
+
+
+```{r}
+foo <- na.omit(foo)
+bar<-na.omit(bar)
+mod_rf = train(pcttip ~ .,
+               data = foo,method = "rf",
+               tuneGrid = data.frame(mtry=1:26),
+               trControl = trainControl(method="cv", number=5),
+               metric = "RMSE")
+mod_rf
+
+ggplot(mod_rf$results, aes(x=mtry, y=RMSE)) + 
+  geom_point(size=3) +
+  xlab("mtry") + geom_line()
+mod_rf$bestTune
+final<- mod_rf$finalModel
+
+
+pred_rf <- predict(final, newdata = bar, type = "response")
+RMSE(pred_rf, bar$pcttip)
+```
+
+```{r}
+library(e1071)
+mod_svm <- svm(pcttip~.,
+               data = foo,
+               type = 'eps-regression',
+               kernel = 'radial')
+mod_svm
+pred_svm = predict(mod_svm, newdata = bar)
+RMSE(pred_svm, bar$pcttip)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
